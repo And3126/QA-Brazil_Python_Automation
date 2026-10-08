@@ -6,7 +6,8 @@ import helpers
 
 
 class UrbanRoutesPage:
-    # --- Localizadores ---
+
+    # Localizadores
     FROM_FIELD = (By.ID, 'from')
     TO_FIELD = (By.ID, 'to')
     CALL_TAXI_BUTTON = (By.XPATH, "//button[contains(text(),'Chamar')]")
@@ -28,24 +29,45 @@ class UrbanRoutesPage:
     PAYMENT_METHOD_TEXT = (By.CLASS_NAME, 'pp-value-text')
 
     COMMENT_INPUT = (By.ID, 'comment')
-    BLANKET_SWITCH = (By.CSS_SELECTOR, ".switch")
-    BLANKET_CHECKBOX = (By.CSS_SELECTOR, ".switch-input")
+    BLANKET_SWITCH = (By.CSS_SELECTOR, "span.slider.round")
+    BLANKET_CHECKBOX = (By.XPATH, "//span[contains(@class,'slider')]/parent::*/input[@type='checkbox']")
     ICE_CREAM_PLUS = (By.XPATH, "//div[text()='Sorvete']/ancestor::div[@class='r-group-items']//div[@class='counter-plus']")
     ICE_CREAM_COUNT = (By.XPATH, "//div[text()='Sorvete']/ancestor::div[@class='r-group-items']//div[@class='counter-value']")
 
     ORDER_BUTTON = (By.CLASS_NAME, 'smart-button-main')
     ORDER_MODAL_TITLE = (By.CLASS_NAME, 'order-header-title')
 
+    OVERLAY = (By.CSS_SELECTOR, 'div.overlay')
+
     def __init__(self, driver):
         self.driver = driver
         self.wait = WebDriverWait(driver, 10)
 
+    # Métodos privados de espera
+    def _find(self, locator):
+        return self.wait.until(EC.visibility_of_element_located(locator))
+
+    def _present(self, locator):
+        return self.wait.until(EC.presence_of_element_located(locator))
+
+    def _click(self, locator):
+        self.wait.until(EC.element_to_be_clickable(locator)).click()
+
+    def _type(self, locator, text, clear=True):
+        element = self._find(locator)
+        if clear:
+            element.clear()
+        element.send_keys(text)
+
+    def _wait_overlay_gone(self):
+        self.wait.until(EC.invisibility_of_element_located(self.OVERLAY))
+
     # Rota
     def set_from(self, address):
-        self.wait.until(EC.visibility_of_element_located(self.FROM_FIELD)).send_keys(address)
+        self._type(self.FROM_FIELD, address)
 
     def set_to(self, address):
-        self.wait.until(EC.visibility_of_element_located(self.TO_FIELD)).send_keys(address)
+        self._type(self.TO_FIELD, address)
 
     def get_from(self):
         return self.driver.find_element(*self.FROM_FIELD).get_property('value')
@@ -59,71 +81,69 @@ class UrbanRoutesPage:
 
     # Tarifa
     def click_call_taxi(self):
-        self.wait.until(EC.element_to_be_clickable(self.CALL_TAXI_BUTTON)).click()
-
-    def select_comfort_plan(self):
-        self.wait.until(EC.element_to_be_clickable(self.COMFORT_PLAN)).click()
+        self._click(self.CALL_TAXI_BUTTON)
 
     def is_comfort_selected(self):
-        card = self.wait.until(EC.presence_of_element_located(self.COMFORT_PLAN_CARD))
+        card = self._present(self.COMFORT_PLAN_CARD)
         return 'active' in card.get_attribute('class')
+
+    def select_comfort_plan(self):
+
+        if not self.is_comfort_selected():
+            self._click(self.COMFORT_PLAN)
 
     # Telefone
     def set_phone(self, phone):
-        self.wait.until(EC.element_to_be_clickable(self.PHONE_BUTTON)).click()
-        phone_input = self.wait.until(EC.visibility_of_element_located(self.PHONE_INPUT))
-        phone_input.send_keys(phone.replace(' ', ''))  # sem espaços: a máscara do campo formata sozinha
-        self.wait.until(EC.element_to_be_clickable(self.PHONE_NEXT_BUTTON)).click()
-        code_input = self.wait.until(EC.visibility_of_element_located(self.SMS_CODE_INPUT))
+        self._click(self.PHONE_BUTTON)
+        self._type(self.PHONE_INPUT, phone, clear=False)
+        self._click(self.PHONE_NEXT_BUTTON)
+        self._find(self.SMS_CODE_INPUT)
         code = helpers.retrieve_phone_code(self.driver)
-        code_input.send_keys(code)
-        self.driver.find_element(*self.SMS_CONFIRM_BUTTON).click()
+        self._type(self.SMS_CODE_INPUT, code, clear=False)
+        self._click(self.SMS_CONFIRM_BUTTON)
+        self._wait_overlay_gone()
 
     def get_phone(self):
-        return self.wait.until(EC.visibility_of_element_located(self.PHONE_BUTTON)).text
+        return self._find(self.PHONE_BUTTON).text
 
     # Cartão
     def add_card(self, number, cvv):
-        self.wait.until(EC.element_to_be_clickable(self.PAYMENT_BUTTON)).click()
-        self.wait.until(EC.element_to_be_clickable(self.ADD_CARD_OPTION)).click()
-        number_input = self.wait.until(EC.visibility_of_element_located(self.CARD_NUMBER_INPUT))
-        number_input.send_keys(number)
-        cvv_input = self.driver.find_element(*self.CARD_CVV_INPUT)
-        cvv_input.send_keys(cvv)
-        cvv_input.send_keys(Keys.TAB)
-        self.wait.until(EC.element_to_be_clickable(self.CARD_LINK_BUTTON)).click()
-        self.wait.until(EC.element_to_be_clickable(self.PAYMENT_CLOSE_BUTTON)).click()
+        self._click(self.PAYMENT_BUTTON)
+        self._click(self.ADD_CARD_OPTION)
+        self._type(self.CARD_NUMBER_INPUT, number, clear=False)
+        self._type(self.CARD_CVV_INPUT, cvv, clear=False)
+        self._find(self.CARD_CVV_INPUT).send_keys(Keys.TAB)  # tira o foco do CVV para habilitar o botão "Adicionar"
+        self._click(self.CARD_LINK_BUTTON)
+        self._click(self.PAYMENT_CLOSE_BUTTON)
+        self._wait_overlay_gone()
 
     def get_payment_method(self):
         return self.driver.find_element(*self.PAYMENT_METHOD_TEXT).text
 
     # Comentário
     def set_comment(self, message):
-        self.wait.until(EC.visibility_of_element_located(self.COMMENT_INPUT)).send_keys(message)
+        self._type(self.COMMENT_INPUT, message)
 
     def get_comment(self):
         return self.driver.find_element(*self.COMMENT_INPUT).get_property('value')
 
     # Extras
     def order_blanket(self):
-        switch = self.wait.until(EC.presence_of_element_located(self.BLANKET_SWITCH))
-        self.driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", switch)
-        self.wait.until(EC.element_to_be_clickable(self.BLANKET_SWITCH)).click()
+        self._click(self.BLANKET_SWITCH)
 
     def is_blanket_selected(self):
         return self.driver.find_element(*self.BLANKET_CHECKBOX).get_property('checked')
 
     def order_ice_creams(self, quantity=2):
-        plus = self.wait.until(EC.element_to_be_clickable(self.ICE_CREAM_PLUS))
-        for _ in range(quantity):  # o ciclo que estava no main.py agora vive aqui
-            plus.click()
+        for _ in range(quantity):
+            self._click(self.ICE_CREAM_PLUS)
 
     def get_ice_cream_count(self):
         return int(self.driver.find_element(*self.ICE_CREAM_COUNT).text)
 
     # Pedido
     def click_order(self):
-        self.wait.until(EC.element_to_be_clickable(self.ORDER_BUTTON)).click()
+        self._click(self.ORDER_BUTTON)
 
     def is_order_modal_visible(self):
-        return self.wait.until(EC.visibility_of_element_located(self.ORDER_MODAL_TITLE)).is_displayed()
+        return self._find(self.ORDER_MODAL_TITLE).is_displayed()
