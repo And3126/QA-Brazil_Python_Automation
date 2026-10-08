@@ -29,7 +29,7 @@ def retrieve_phone_code(driver) -> str:
 
 # Verifica se o Routes está ativo e funcionando. Não mude
 def is_url_reachable(url):
-    """Verifique se a URL pode ser acessada. Passe a URL do Urban Routes como parâmetro.
+    """Verifique se a URL pode ser acessada. Passe a URL  do Urban Routes como parâmetro.
     Se puder ser alcançada, retorna True (verdadeiro), caso contrário, retorna False (falso)"""
 
     import ssl
