@@ -43,7 +43,7 @@ class UrbanRoutesPage:
         self.driver = driver
         self.wait = WebDriverWait(driver, 10)
 
-    # Métodos privados de espera
+    # Métodos privados de espera (centralizam WebDriverWait e EC)
     def _find(self, locator):
         return self.wait.until(EC.visibility_of_element_located(locator))
 
@@ -70,10 +70,10 @@ class UrbanRoutesPage:
         self._type(self.TO_FIELD, address)
 
     def get_from(self):
-        return self.driver.find_element(*self.FROM_FIELD).get_property('value')
+        return self._find(self.FROM_FIELD).get_property('value')
 
     def get_to(self):
-        return self.driver.find_element(*self.TO_FIELD).get_property('value')
+        return self._find(self.TO_FIELD).get_property('value')
 
     def set_route(self, address_from, address_to):
         self.set_from(address_from)
@@ -88,7 +88,6 @@ class UrbanRoutesPage:
         return 'active' in card.get_attribute('class')
 
     def select_comfort_plan(self):
-
         if not self.is_comfort_selected():
             self._click(self.COMFORT_PLAN)
 
@@ -118,28 +117,28 @@ class UrbanRoutesPage:
         self._wait_overlay_gone()
 
     def get_payment_method(self):
-        return self.driver.find_element(*self.PAYMENT_METHOD_TEXT).text
+        return self._find(self.PAYMENT_METHOD_TEXT).text
 
     # Comentário
     def set_comment(self, message):
         self._type(self.COMMENT_INPUT, message)
 
     def get_comment(self):
-        return self.driver.find_element(*self.COMMENT_INPUT).get_property('value')
+        return self._find(self.COMMENT_INPUT).get_property('value')
 
     # Extras
     def order_blanket(self):
         self._click(self.BLANKET_SWITCH)
 
     def is_blanket_selected(self):
-        return self.driver.find_element(*self.BLANKET_CHECKBOX).get_property('checked')
+        return self._present(self.BLANKET_CHECKBOX).get_property('checked')
 
     def order_ice_creams(self, quantity=2):
         for _ in range(quantity):
             self._click(self.ICE_CREAM_PLUS)
 
     def get_ice_cream_count(self):
-        return int(self.driver.find_element(*self.ICE_CREAM_COUNT).text)
+        return int(self._find(self.ICE_CREAM_COUNT).text)
 
     # Pedido
     def click_order(self):
