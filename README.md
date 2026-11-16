@@ -1,8 +1,27 @@
-### Diretrizes de nomenclatura de código
+# Urban Routes: Automação de Testes E2E
 
-- **Nomes de variáveis** são escritos em `snake_case` e descrevem sua finalidade;
-- **Constantes** são escritas em maiúsculas;
-- **Comentários** são usados para explicar blocos importantes de código;
-- A **organização do código** é modular, com blocos de código reutilizáveis importados para onde for necessário;
-- Evite funções de espera (`wait`) desnecessárias que fazem com que o teste seja executado por mais tempo do que o necessário;
-- Siga uma **convenção de nomenclatura** para títulos de teste que começam com `test\_` e fornece uma descrição clara do cenário de teste. Os títulos dos testes são fornecidos no resumo.
+Testes automatizados do fluxo de pedido de táxi de um aplicativo web,
+feitos com Python, Selenium e Pytest.
+
+## Tecnologias
+- Python
+- Selenium WebDriver
+- Pytest
+- Page Object Model (POM)
+
+## O que é testado
+- Definir a rota e escolher o plano Comfort
+- Cadastrar telefone com código de confirmação por SMS
+- Adicionar cartão de crédito
+- Comentário, cobertor, lenços e sorvetes
+- Pedir o táxi
+
+## Estrutura do projeto
+- main.py: casos de teste
+- pages.py: Page Object (localizadores e ações)
+- data.py: dados de teste
+- helpers.py: funções auxiliares
+
+## Como rodar
+pip install -r requirements.txt
+pytest main.py
